@@ -324,7 +324,11 @@ describe("CryptoFactory", () => {
     const collateralIn = usdcBasis.mul(10);
     await collateral.faucet(collateralIn);
     await collateral.approve(ammFactory.address, collateralIn);
-    const lpTokensIn = await ammFactory.getPoolTokenBalance(marketFactory.address, ethPriceMarketId, signer.address);
+    const lpTokensIn = await ammFactory.getTokenBalance(
+      marketFactory.address,
+      ethPriceMarketId.toString(),
+      signer.address
+    );
     const pool = await ammFactory
       .getPool(marketFactory.address, ethPriceMarketId)
       .then((address) => BPool__factory.connect(address, signer));

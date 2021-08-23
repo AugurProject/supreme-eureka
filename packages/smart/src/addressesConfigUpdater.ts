@@ -61,6 +61,12 @@ export function updateAddressConfig(addressFilePath: string, chainId: number, ad
                                 "fetcher",
                                 ts.factory.createStringLiteral(marketFactory.fetcher)
                               ),
+                              context.factory.createPropertyAssignment(
+                                "hasRewards",
+                                marketFactory.hasRewards
+                                  ? ts.factory.createToken(SyntaxKind.TrueKeyword)
+                                  : ts.factory.createToken(SyntaxKind.FalseKeyword)
+                              ),
                             ];
                             if (marketFactory.description) {
                               fields.push(

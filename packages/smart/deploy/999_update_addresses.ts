@@ -7,7 +7,7 @@ import { Addresses, addresses as originalAddresses, ChainId, graphChainNames, Ma
 import { DeploymentsExtension } from "hardhat-deploy/dist/types";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  console.log("Done deploying! Writing deploy information to addresses.ts");
+  if (hre.network.config.live) console.log("Done deploying! Writing deploy information to addresses.ts");
 
   const { deployments } = hre;
   const chainId = parseInt(await getChainId());
@@ -44,6 +44,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       collateral,
       ammFactory: ammFactory?.address || "",
       fetcher: nbaFetcher?.address || "",
+      hasRewards: true,
     });
   }
   if (cryptoMarketFactory && !hasFactory(marketFactories, cryptoMarketFactory.address)) {
@@ -56,6 +57,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       collateral,
       ammFactory: ammFactory?.address || "",
       fetcher: "", // TODO
+      hasRewards: true,
     });
   }
   if (mmaLinkMarketFactory && !hasFactory(marketFactories, mmaLinkMarketFactory.address)) {
@@ -68,6 +70,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       collateral,
       ammFactory: ammFactory?.address || "",
       fetcher: mmaFetcher?.address ?? "",
+      hasRewards: true,
     });
   }
   if (nflMarketFactory && !hasFactory(marketFactories, nflMarketFactory.address)) {
@@ -80,6 +83,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       collateral,
       ammFactory: ammFactory?.address || "",
       fetcher: nbaFetcher?.address || "", // uses nba because nfl is very similar to nba/mlb
+      hasRewards: true,
     });
   }
 
@@ -93,7 +97,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     },
   };
 
-  console.log(JSON.stringify(addresses, null, 2));
+  if (hre.network.config.live) console.log(JSON.stringify(addresses, null, 2));
 
   const addressFilePath = path.resolve(__dirname, "../addresses.ts");
   updateAddressConfig(addressFilePath, chainId, addresses);

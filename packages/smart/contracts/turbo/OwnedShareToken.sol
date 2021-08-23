@@ -2,9 +2,9 @@
 pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../libraries/Ownable.sol";
+import "../libraries/AugurOwnable.sol";
 
-contract OwnedERC20 is ERC20, Ownable {
+contract OwnedERC20 is ERC20, AugurOwnable {
     constructor(
         string memory name_,
         string memory symbol_,

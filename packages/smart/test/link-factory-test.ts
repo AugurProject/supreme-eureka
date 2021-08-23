@@ -10,6 +10,7 @@ import {
   Cash__factory,
   FeePot,
   FeePot__factory,
+  MasterChef__factory,
   MMAFetcher,
   MMAFetcher__factory,
   MMALinkMarketFactory,
@@ -33,6 +34,7 @@ import {
   SportsLinkEventStatus,
 } from "../src";
 
+const BONE = BigNumber.from(10).pow(18);
 const INITIAL_TOTAL_SUPPLY_OF_BPOOL = BigNumber.from(10).pow(20);
 const ZERO = BigNumber.from(0);
 
@@ -69,6 +71,7 @@ describe("LinkFactory", () => {
     const reputationToken = await new Cash__factory(signer).deploy("REPv2", "REPv2", 18);
     feePot = await new FeePot__factory(signer).deploy(collateral.address, reputationToken.address);
     shareFactor = calcShareFactor(await collateral.decimals());
+
     marketFactory = await new SportsLinkMarketFactoryV2__factory(signer).deploy(
       signer.address,
       collateral.address,
@@ -296,9 +299,18 @@ describe("NBA fetcher", () => {
       4
     );
 
+    const rewardsToken = await new Cash__factory(signer).deploy("RWS", "RWS", 18);
+    const masterChef = await new MasterChef__factory(signer).deploy(rewardsToken.address);
+
+    const initialRewards = BONE.mul(10000);
+    await rewardsToken.faucet(initialRewards);
+    await rewardsToken.transfer(masterChef.address, initialRewards);
+
     const bFactory = await new BFactory__factory(signer).deploy();
     const swapFee = smallFee;
-    ammFactory = await new AMMFactory__factory(signer).deploy(bFactory.address, swapFee);
+    ammFactory = await new AMMFactory__factory(signer).deploy(bFactory.address, masterChef.address, swapFee);
+
+    await masterChef.trustAMMFactory(ammFactory.address);
 
     await marketFactory.createMarket(
       eventId,
@@ -548,9 +560,18 @@ describe("MMA fetcher", () => {
       7
     );
 
+    const rewardsToken = await new Cash__factory(signer).deploy("RWS", "RWS", 18);
+    const masterChef = await new MasterChef__factory(signer).deploy(rewardsToken.address);
+
+    const initialRewards = BONE.mul(10000);
+    await rewardsToken.faucet(initialRewards);
+    await rewardsToken.transfer(masterChef.address, initialRewards);
+
     const bFactory = await new BFactory__factory(signer).deploy();
     const swapFee = smallFee;
-    ammFactory = await new AMMFactory__factory(signer).deploy(bFactory.address, swapFee);
+    ammFactory = await new AMMFactory__factory(signer).deploy(bFactory.address, masterChef.address, swapFee);
+
+    await masterChef.trustAMMFactory(ammFactory.address);
 
     await marketFactory.createMarket(
       1880,

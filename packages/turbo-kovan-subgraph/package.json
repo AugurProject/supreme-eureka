@@ -9,7 +9,7 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy:kovan": "graph deploy --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ augurproject/augur-turbo-kovan",
-    "deploy:mumbai": "graph deploy --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ augurproject/augur-turbo-mumbai",
+    "deploy:mumbai": "graph deploy --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ augurproject/augur-turbo-mumbai-rewards",
     "deploy:matic": "graph deploy --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ augurproject/augur-turbo-matic",
     "deploy:staging": "graph deploy --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ augurproject/augur-turbo-matic-staging",
     "deploy:local": "graph deploy --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020 augurproject/augur-turbo-kovan",

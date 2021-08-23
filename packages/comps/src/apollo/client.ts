@@ -1,12 +1,17 @@
 import ApolloClient from "apollo-boost";
-import { GET_MARKETS, GET_BLOCK, GET_LATEST_BLOCK } from "./queries";
+import {
+  GET_BLOCK,
+  GET_MARKETS,
+  GET_TRANSACTIONS,
+  SEARCH_MARKETS,
+  GET_LATEST_BLOCK
+} from "./queries";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { Cash } from "../types";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { ErrorPolicy, FetchPolicy } from "apollo-client";
 import { MARKET_FACTORY_TYPES } from "../utils/constants";
-import { SEARCH_MARKETS, GET_TRANSACTIONS } from "./queries";
 import { PARA_CONFIG } from "../stores/constants";
 
 dayjs.extend(utc);
@@ -202,7 +207,7 @@ const getClientConfig = (): { augurClient: string; blockClient: string; turboCli
     "80001": {
       augurClient: "https://api.thegraph.com/subgraphs/name/augurproject/augur-v2-staging",
       blockClient: "https://api.thegraph.com/subgraphs/name/x0swapsubgraph/matic-blocks", // didn't find a block for mumbai, using matic
-      turboClient: "https://api.thegraph.com/subgraphs/name/augurproject/augur-turbo-mumbai",
+      turboClient: "https://api.thegraph.com/subgraphs/name/augurproject/augur-turbo-mumbai-rewards",
       network: "mumbai",
       playground: "https://thegraph.com/legacy-explorer/subgraph/augurproject/augur-turbo-mumbai",
     },

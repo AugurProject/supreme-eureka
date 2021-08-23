@@ -6,15 +6,22 @@ import "../balancer/BFactory.sol";
 import "../libraries/SafeMathUint256.sol";
 import "./AbstractMarketFactoryV2.sol";
 import "../balancer/BNum.sol";
+import "../rewards/MasterChef.sol";
+import "hardhat/console.sol";
 
-contract AMMFactory is BNum {
+contract AMMFactory is BNum, Ownable {
     using SafeMathUint256 for uint256;
 
     uint256 private constant MAX_UINT = 2**256 - 1;
+    uint256 private constant MIN_INITIAL_LIQUIDITY = BONE * 100;
 
     BFactory public bFactory;
+    MasterChef public masterChef;
     // MarketFactory => Market => BPool
     mapping(address => mapping(uint256 => BPool)) public pools;
+
+    // BPool => _pid for the related pool.
+    mapping(address => uint256) public masterChefPools;
     uint256 fee;
 
     event PoolCreated(
@@ -45,8 +52,13 @@ contract AMMFactory is BNum {
         uint256 price
     );
 
-    constructor(BFactory _bFactory, uint256 _fee) {
+    constructor(
+        BFactory _bFactory,
+        MasterChef _masterChef,
+        uint256 _fee
+    ) {
         bFactory = _bFactory;
+        masterChef = _masterChef;
         fee = _fee;
     }
 
@@ -60,14 +72,17 @@ contract AMMFactory is BNum {
 
         AbstractMarketFactoryV2.Market memory _market = _marketFactory.getMarket(_marketId);
 
+        uint256 _sets = _marketFactory.calcShares(_initialLiquidity);
+
+        // Comparing to sets because sets are normalized to 10e18.
+        require(_sets >= MIN_INITIAL_LIQUIDITY, "Initial liquidity must be at least 100 collateral.");
+
         //  Turn collateral into shares
         IERC20Full _collateral = _marketFactory.collateral();
         require(
             _collateral.allowance(msg.sender, address(this)) >= _initialLiquidity,
             "insufficient collateral allowance for initial liquidity"
         );
-
-        uint256 _sets = _marketFactory.calcShares(_initialLiquidity);
 
         _collateral.transferFrom(msg.sender, address(this), _initialLiquidity);
         _collateral.approve(address(_marketFactory), MAX_UINT);
@@ -90,19 +105,23 @@ contract AMMFactory is BNum {
         // Finalize pool setup
         _pool.finalize();
 
-        pools[address(_marketFactory)][_marketId] = _pool;
-
-        // Pass along LP tokens for initial liquidity
-        uint256 _lpTokenBalance = _pool.balanceOf(address(this)) - (BONE / 1000);
-
         // Burn (BONE / 1000) lp tokens to prevent the bpool from locking up. When all liquidity is removed.
         _pool.transfer(address(0x0), (BONE / 1000));
-        _pool.transfer(_lpTokenRecipient, _lpTokenBalance);
+
+        pools[address(_marketFactory)][_marketId] = _pool;
 
         uint256[] memory _balances = new uint256[](_market.shareTokens.length);
         for (uint256 i = 0; i < _market.shareTokens.length; i++) {
             _balances[i] = 0;
         }
+
+        uint256 _masterChefPool = masterChef.add(address(_marketFactory), IERC20(address(_pool)));
+        masterChefPools[address(_pool)] = _masterChefPool;
+        _pool.approve(address(masterChef), MAX_UINT);
+
+        // Pass along LP tokens for initial liquidity
+        uint256 _lpTokenBalance = _pool.balanceOf(address(this));
+        masterChef.trustedDeposit(_lpTokenRecipient, _masterChefPool, _lpTokenBalance);
 
         emit PoolCreated(address(_pool), address(_marketFactory), _marketId, msg.sender, _lpTokenRecipient);
         emit LiquidityChanged(
@@ -164,7 +183,7 @@ contract AMMFactory is BNum {
 
         require(_poolAmountOut >= _minLPTokensOut, "Would not have received enough LP tokens");
 
-        _pool.transfer(_lpTokenRecipient, _poolAmountOut);
+        masterChef.trustedDeposit(_lpTokenRecipient, masterChefPools[address(_pool)], _poolAmountOut);
 
         // Transfer the remaining shares back to _lpTokenRecipient.
         _balances = new uint256[](_market.shareTokens.length);
@@ -198,8 +217,7 @@ contract AMMFactory is BNum {
         require(_pool != BPool(0), "Pool needs to be created");
 
         AbstractMarketFactoryV2.Market memory _market = _marketFactory.getMarket(_marketId);
-
-        _pool.transferFrom(msg.sender, address(this), _lpTokensIn);
+        masterChef.trustedWithdraw(msg.sender, masterChefPools[address(_pool)], _lpTokensIn);
 
         uint256[] memory exitPoolEstimate;
         {
@@ -427,13 +445,41 @@ contract AMMFactory is BNum {
         return _pool.getSwapFee();
     }
 
-    function getPoolTokenBalance(
+    function getTokenBalance(
         AbstractMarketFactoryV2 _marketFactory,
         uint256 _marketId,
-        address whom
+        address _user
     ) external view returns (uint256) {
         BPool _pool = pools[address(_marketFactory)][_marketId];
-        return _pool.balanceOf(whom);
+        uint256 _pid = masterChefPools[address(_pool)];
+
+        if (masterChef.poolLength() > _pid) {
+            return masterChef.getUserAmount(_pid, _user);
+        } else {
+            // Return 0 here to support multi call.
+            return 0;
+        }
+    }
+
+    function getTokenBalanceByPool(BPool _pool, address _user) external view returns (uint256) {
+        uint256 _pid = masterChefPools[address(_pool)];
+
+        if (masterChef.poolLength() > _pid) {
+            return masterChef.getUserAmount(_pid, _user);
+        } else {
+            // Return 0 here to support multi call.
+            return 0;
+        }
+    }
+
+    function getPoolPendingRewards(BPool _pool, address _user) external view returns (uint256) {
+        uint256 _pid = masterChefPools[address(_pool)];
+        if (masterChef.poolLength() > _pid) {
+            return masterChef.pendingReward(_pid, _user);
+        } else {
+            // Return 0 here to support multi call.
+            return 0;
+        }
     }
 
     function getPool(AbstractMarketFactoryV2 _marketFactory, uint256 _marketId) external view returns (BPool) {

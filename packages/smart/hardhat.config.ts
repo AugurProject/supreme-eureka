@@ -4,6 +4,7 @@ import "hardhat-contract-sizer";
 import "hardhat-abi-exporter";
 import "hardhat-docgen";
 import "@tenderly/hardhat-tenderly";
+import "hardhat-gas-reporter";
 
 import "./tasks";
 import { mapOverObject } from "./src/";
@@ -15,10 +16,22 @@ export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const NO_OWNER = "0x0000000000000000000000000000000000000001";
 
 const config: HardhatUserConfig = {
+  gasReporter: {
+    enabled: !!process.env.REPORT_GAS,
+  },
   solidity: {
     compilers: [
       {
         version: "0.7.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.6.12",
         settings: {
           optimizer: {
             enabled: true,
