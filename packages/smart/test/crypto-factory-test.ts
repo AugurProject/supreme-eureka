@@ -1,5 +1,5 @@
 import { deployments, ethers, network } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
 import { BigNumber, BigNumberish } from "ethers";
 
@@ -478,6 +478,7 @@ async function marketStaticBundleCheck(
   };
 }
 
+<<<<<<< HEAD
 async function marketDynamicBundleCheck(
   marketFactory: CryptoMarketFactory,
   ammFactory: AMMFactory,
@@ -509,3 +510,5 @@ async function makePriceFeedCheck(coin: PriceFeed) {
     priceFeed,
   };
 }
+=======
+>>>>>>> Remove deployConfig more

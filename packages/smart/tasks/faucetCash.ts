@@ -3,7 +3,7 @@ import { bignumber, calcWei, getERC20Name } from "../src/utils/tasks";
 import { task, types } from "hardhat/config";
 
 import "hardhat/types/config";
-import { isHttpNetworkConfig, makeSigner } from "./deploy";
+import { makeSigner } from "./deploy";
 import { BigNumber } from "ethers";
 import { Cash__factory } from "../typechain";
 
@@ -18,7 +18,7 @@ task("faucetCash", "faucet fake collateral. assumes USDC")
   )
   .setAction(async ({ address, large, small }: { address: string; large: BigNumber; small: BigNumber }, hre) => {
     const signer = await makeSigner(hre);
-    const confirmations = isHttpNetworkConfig(hre.network.config) ? hre.network.config.confirmations : 0;
+    const confirmations = hre.network.config.confirmations || 0;
     const contract = Cash__factory.connect(address, signer);
 
     const { wei, weiDesc } = await calcWei(contract, small, large, false);

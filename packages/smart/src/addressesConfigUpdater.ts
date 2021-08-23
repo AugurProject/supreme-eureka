@@ -1,7 +1,6 @@
 import * as ts from "typescript";
 import { EmitHint, SyntaxKind } from "typescript";
 import * as fs from "fs";
-import prettier from "prettier";
 import { Addresses, MarketFactory } from "../addresses";
 
 const printer = ts.createPrinter();
@@ -127,9 +126,6 @@ export function updateAddressConfig(addressFilePath: string, chainId: number, ad
 
   const transformationResult = ts.transform(sourceFile, [transformerFactory]);
   const output = printer.printNode(EmitHint.Unspecified, transformationResult.transformed[0], sourceFile);
-  const formattedOutput = prettier.format(output, {
-    parser: "babel-ts",
-  });
 
-  fs.writeFileSync(addressFilePath, formattedOutput);
+  fs.writeFileSync(addressFilePath, output);
 }
