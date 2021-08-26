@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.0;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -19,7 +20,7 @@ contract MasterChef is Ownable {
 
     // The percentage of the rewards period that early deposit bonus will payout.
     // e.g. Early deposit bonus hits if LP is done in the first x percent of the period.
-    uint256 public constant BONUS_REWARDS_PERCENTAGE = BONE / 10; // 10% of reward period.
+    uint256 public constant EARLY_DEPOSIT_BONUS_REWARDS_PERCENTAGE = BONE / 10; // 10% of reward period.
 
     // Info of each user.
     struct UserInfo {
@@ -54,6 +55,15 @@ contract MasterChef is Ownable {
     }
     // Info of each pool.
     PoolInfo[] public poolInfo;
+
+    struct PendingRewardInfo {
+        uint256 beginTimestamp;
+        uint256 endTimestamp;
+        uint256 earlyDepositEndTimestamp;
+        uint256 accruedStandardRewards;
+        uint256 accruedEarlyDepositBonusRewards;
+        uint256 pendingEarlyDepositBonusRewards;
+    }
 
     struct MarketFactoryInfo {
         uint256 earlyDepositBonusRewards; // Amount of REWARDs to distribute to early depositors.
@@ -189,18 +199,29 @@ contract MasterChef is Ownable {
     }
 
     // View function to see pending REWARDs on frontend.
-    function pendingReward(uint256 _pid, address _user) external view returns (uint256) {
+    function getPendingRewardInfo(uint256 _pid, address _user)
+        external
+        view
+        returns (PendingRewardInfo memory _pendingRewardInfo)
+    {
         PoolInfo storage _pool = poolInfo[_pid];
         UserInfo storage _user = userInfo[_pid][_user];
         uint256 accRewardsPerShare = _pool.accRewardsPerShare;
         uint256 lpSupply = _pool.lpToken.balanceOf(address(this));
         uint256 _earlyDepositRewards = 0;
 
-        uint256 _rewardsPeriodsInSeconds = (_pool.rewardsPeriods * 1 days * BONUS_REWARDS_PERCENTAGE) / BONE;
-        uint256 _rewardPeriodEndTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
+        _pendingRewardInfo.endTimestamp = _pool.rewardsPeriods * 1 days;
+        _pendingRewardInfo.earlyDepositEndTimestamp =
+            ((_pendingRewardInfo.endTimestamp * EARLY_DEPOSIT_BONUS_REWARDS_PERCENTAGE) / BONE) +
+            _pool.beginTimestamp +
+            1;
 
-        if (_pool.totalEarlyDepositBonusRewardShares > 0 && block.timestamp > _rewardPeriodEndTimestamp) {
-            _earlyDepositRewards = _pool.earlyDepositBonusRewards.mul(_user.amount).div(
+        if (_pool.totalEarlyDepositBonusRewardShares > 0 && block.timestamp > _pendingRewardInfo.endTimestamp) {
+            _pendingRewardInfo.accruedEarlyDepositBonusRewards = _pool.earlyDepositBonusRewards.mul(_user.amount).div(
+                _pool.totalEarlyDepositBonusRewardShares
+            );
+        } else if (_pool.totalEarlyDepositBonusRewardShares > 0) {
+            _pendingRewardInfo.pendingEarlyDepositBonusRewards = _pool.earlyDepositBonusRewards.mul(_user.amount).div(
                 _pool.totalEarlyDepositBonusRewardShares
             );
         }
@@ -210,7 +231,12 @@ contract MasterChef is Ownable {
             accRewardsPerShare = accRewardsPerShare.add(multiplier.mul(_pool.rewardsPerPeriod).div(lpSupply));
         }
 
-        return _user.amount.mul(accRewardsPerShare).div(BONE).sub(_user.rewardDebt).add(_earlyDepositRewards);
+        _pendingRewardInfo.accruedStandardRewards = _user
+            .amount
+            .mul(accRewardsPerShare)
+            .div(BONE)
+            .sub(_user.rewardDebt)
+            .add(_earlyDepositRewards);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
@@ -253,8 +279,9 @@ contract MasterChef is Ownable {
             safeRewardsTransfer(_userAddress, pending);
         }
 
-        uint256 _rewardsPeriodsInSeconds = (_pool.rewardsPeriods * 1 days * BONUS_REWARDS_PERCENTAGE) / BONE;
-        uint256 _bonusrewardsPeriodsEndTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
+        uint256 _rewardsPeriodsInSeconds = _pool.rewardsPeriods * 1 days;
+        uint256 _bonusrewardsPeriodsEndTimestamp =
+            ((_rewardsPeriodsInSeconds * EARLY_DEPOSIT_BONUS_REWARDS_PERCENTAGE) / BONE) + _pool.beginTimestamp + 1;
         uint256 _rewardPeriodEndTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
 
         // If the user was an early deposit, remove user amount from the pool.
@@ -304,8 +331,9 @@ contract MasterChef is Ownable {
 
         updatePool(_pid);
 
-        uint256 _rewardsPeriodsInSeconds = (_pool.rewardsPeriods * 1 days * BONUS_REWARDS_PERCENTAGE) / BONE;
-        uint256 _bonusrewardsPeriodsEndTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
+        uint256 _rewardsPeriodsInSeconds = _pool.rewardsPeriods * 1 days;
+        uint256 _bonusrewardsPeriodsEndTimestamp =
+            ((_rewardsPeriodsInSeconds * EARLY_DEPOSIT_BONUS_REWARDS_PERCENTAGE) / BONE) + _pool.beginTimestamp + 1;
         uint256 _rewardPeriodEndTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
 
         if (_rewardPeriodEndTimestamp <= block.timestamp) {

@@ -73,7 +73,9 @@ describe("MasterChef", () => {
       await network.provider.send("evm_setNextBlockTimestamp", [poolEndTimestamp.toNumber()]);
       await network.provider.send("evm_mine", []);
 
-      expect(await masterChef.pendingReward(0, tom.address)).to.be.equal(rewardsPerPeriod);
+      const pendingRewardsInfo = await masterChef.getPendingRewardInfo(0, tom.address);
+      expect(pendingRewardsInfo.accruedStandardRewards).to.be.equal(0);
+      expect(pendingRewardsInfo.accruedEarlyDepositBonusRewards).to.be.equal(rewardsPerPeriod);
 
       await masterChef.trustedWithdraw(tom.address, 0, initialCashAmount);
 
@@ -133,8 +135,9 @@ describe("MasterChef", () => {
       await network.provider.send("evm_setNextBlockTimestamp", [poolEndTimestamp.add(100000).toNumber()]);
       await network.provider.send("evm_mine", []);
 
-      const otherAmount = await masterChef.pendingReward(0, tom.address);
-      expect(otherAmount).to.be.equal(0);
+      const otherAmount = await masterChef.getPendingRewardInfo(0, tom.address);
+      expect(otherAmount.accruedEarlyDepositBonusRewards).to.be.equal(0);
+      expect(otherAmount.accruedStandardRewards).to.be.equal(0);
 
       // it distributes all the pending rewards.
       expect(await rewardsToken.balanceOf(tom.address)).to.be.equal(0);
@@ -213,8 +216,9 @@ describe("MasterChef", () => {
         const results = await masterChef.getPercentageOfRewardsForPeriod(0);
         expect(results).to.be.equal(BONE);
 
-        const otherAmount = await masterChef.pendingReward(0, tom.address);
-        expect(otherAmount).to.be.equal(rewardsPerPeriod);
+        const otherAmount = await masterChef.getPendingRewardInfo(0, tom.address);
+        expect(otherAmount.accruedEarlyDepositBonusRewards).to.be.equal(0);
+        expect(otherAmount.accruedStandardRewards).to.be.equal(rewardsPerPeriod);
       });
 
       it("should send rewards on withdrawal", async () => {
