@@ -472,13 +472,24 @@ contract AMMFactory is BNum, Ownable {
         }
     }
 
-    function getPoolPendingRewards(BPool _pool, address _user) external view returns (uint256) {
+    function getPendingRewardInfo(BPool _pool, address _user)
+        external
+        view
+        returns (MasterChef.PendingRewardInfo memory)
+    {
         uint256 _pid = masterChefPools[address(_pool)];
         if (masterChef.poolLength() > _pid) {
-            return masterChef.pendingReward(_pid, _user);
+            return masterChef.getPendingRewardInfo(_pid, _user);
         } else {
             // Return 0 here to support multi call.
-            return 0;
+            return
+                MasterChef.PendingRewardInfo({
+                    beginTimestamp: 0,
+                    endTimestamp: 0,
+                    accruedStandardRewards: 0,
+                    accruedEarlyDepositBonusRewards: 0,
+                    pendingEarlyDepositBonusRewards: 0
+                });
         }
     }
 

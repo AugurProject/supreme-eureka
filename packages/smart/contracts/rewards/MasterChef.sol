@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.0;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -54,6 +55,14 @@ contract MasterChef is Ownable {
     }
     // Info of each pool.
     PoolInfo[] public poolInfo;
+
+    struct PendingRewardInfo {
+        uint256 beginTimestamp;
+        uint256 endTimestamp;
+        uint256 accruedStandardRewards;
+        uint256 accruedEarlyDepositBonusRewards;
+        uint256 pendingEarlyDepositBonusRewards;
+    }
 
     struct MarketFactoryInfo {
         uint256 earlyDepositBonusRewards; // Amount of REWARDs to distribute to early depositors.
@@ -189,7 +198,11 @@ contract MasterChef is Ownable {
     }
 
     // View function to see pending REWARDs on frontend.
-    function pendingReward(uint256 _pid, address _user) external view returns (uint256) {
+    function getPendingRewardInfo(uint256 _pid, address _user)
+        external
+        view
+        returns (PendingRewardInfo memory _pendingRewardInfo)
+    {
         PoolInfo storage _pool = poolInfo[_pid];
         UserInfo storage _user = userInfo[_pid][_user];
         uint256 accRewardsPerShare = _pool.accRewardsPerShare;
@@ -197,10 +210,14 @@ contract MasterChef is Ownable {
         uint256 _earlyDepositRewards = 0;
 
         uint256 _rewardsPeriodsInSeconds = (_pool.rewardsPeriods * 1 days * BONUS_REWARDS_PERCENTAGE) / BONE;
-        uint256 _rewardPeriodEndTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
+        _pendingRewardInfo.endTimestamp = _rewardsPeriodsInSeconds + _pool.beginTimestamp + 1;
 
-        if (_pool.totalEarlyDepositBonusRewardShares > 0 && block.timestamp > _rewardPeriodEndTimestamp) {
-            _earlyDepositRewards = _pool.earlyDepositBonusRewards.mul(_user.amount).div(
+        if (_pool.totalEarlyDepositBonusRewardShares > 0 && block.timestamp > _pendingRewardInfo.endTimestamp) {
+            _pendingRewardInfo.accruedEarlyDepositBonusRewards = _pool.earlyDepositBonusRewards.mul(_user.amount).div(
+                _pool.totalEarlyDepositBonusRewardShares
+            );
+        } else if (_pool.totalEarlyDepositBonusRewardShares > 0) {
+            _pendingRewardInfo.pendingEarlyDepositBonusRewards = _pool.earlyDepositBonusRewards.mul(_user.amount).div(
                 _pool.totalEarlyDepositBonusRewardShares
             );
         }
@@ -210,7 +227,12 @@ contract MasterChef is Ownable {
             accRewardsPerShare = accRewardsPerShare.add(multiplier.mul(_pool.rewardsPerPeriod).div(lpSupply));
         }
 
-        return _user.amount.mul(accRewardsPerShare).div(BONE).sub(_user.rewardDebt).add(_earlyDepositRewards);
+        _pendingRewardInfo.accruedStandardRewards = _user
+            .amount
+            .mul(accRewardsPerShare)
+            .div(BONE)
+            .sub(_user.rewardDebt)
+            .add(_earlyDepositRewards);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
