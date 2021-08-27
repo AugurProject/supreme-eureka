@@ -478,7 +478,6 @@ async function marketStaticBundleCheck(
   };
 }
 
-<<<<<<< HEAD
 async function marketDynamicBundleCheck(
   marketFactory: CryptoMarketFactory,
   ammFactory: AMMFactory,
@@ -510,5 +509,3 @@ async function makePriceFeedCheck(coin: PriceFeed) {
     priceFeed,
   };
 }
-=======
->>>>>>> Remove deployConfig more
