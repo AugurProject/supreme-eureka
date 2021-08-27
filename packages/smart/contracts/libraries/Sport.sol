@@ -59,6 +59,9 @@ abstract contract Sport is AbstractMarketFactoryV3, LineHelper {
         string memory _homeTeamName,
         string memory _awayTeamName
     ) internal {
+        // Cannot create markets for an event twice.
+        require(sportsEvents[_eventId].status == SportsEventStatus.Unknown, "event exists");
+
         listOfSportsEvents.push(_eventId);
         sportsEvents[_eventId].status = SportsEventStatus.Scheduled; // new events must be Scheduled
         sportsEvents[_eventId].markets = _markets;

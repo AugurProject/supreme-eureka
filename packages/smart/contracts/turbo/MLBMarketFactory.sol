@@ -43,9 +43,6 @@ contract MLBMarketFactory is AbstractMarketFactoryV3, SportView, HasHeadToHeadMa
         uint256 _startTimestamp,
         int256[2] memory _moneylines // [home,away]
     ) public onlyLinkNode returns (uint256[] memory _marketIds) {
-        // Cannot create markets for an event twice.
-        require(sportsEvents[_eventId].status == SportsEventStatus.Unknown);
-
         _marketIds = makeMarkets(_moneylines, _homeTeamName, _awayTeamName);
         makeSportsEvent(
             _eventId,
