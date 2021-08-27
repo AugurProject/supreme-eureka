@@ -122,3 +122,4 @@ node_modules
 
 # DS store
 **/.DS_Store
+/packages/smart/deployments/localhost/

@@ -15,11 +15,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const data = await priceFeed.latestRoundData();
 
     if (!data._answer.eq(0)) {
-      console.log(`Skipping setting price feed for ${coin.symbol} because it's already set`);
+      if (hre.network.config.live)
+        console.log(`Skipping setting price feed for ${coin.symbol} because it's already set`);
       continue;
     }
 
-    console.log(`Setting price feed for ${coin.symbol} to ${address}`);
+    if (hre.network.config.live) console.log(`Setting price feed for ${coin.symbol} to ${address}`);
     await priceFeed.addRound(1, coin.price, 2, 4, 1); // arbitrary values
   }
 };

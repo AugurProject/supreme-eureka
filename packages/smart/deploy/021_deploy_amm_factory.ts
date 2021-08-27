@@ -10,14 +10,23 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const swapFee = BigNumber.from(10).pow(15).mul(15); // 1.5%
 
+  const masterChefAddress = (await deployments.get("MasterChef")).address;
+
   await deployments.deploy("AMMFactory", {
     from: deployer,
-    args: [balancerFactoryAddress, swapFee],
+    args: [balancerFactoryAddress, masterChefAddress, swapFee],
     log: true,
   });
 };
 
 func.tags = ["AMMFactory"];
-func.dependencies = ["BFactory"];
+func.dependencies = [
+  "BFactory",
+  "MasterChef",
+  "SportsLinkMarketFactory",
+  "MMALinkMarketFactory",
+  "CryptoMarketFactory",
+  "NFLMarketFactory",
+];
 
 export default func;

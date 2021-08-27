@@ -650,8 +650,10 @@ export const getUserBalances = async (
     lpTokens: {},
     marketShares: {},
     claimableWinnings: {},
+    pendingRewards: {},
     claimableFees: "0",
     approvals: {},
+    totalRewards: "0",
   };
 
   if (!account || !provider) return userBalances;
@@ -659,7 +661,10 @@ export const getUserBalances = async (
   const userMarketTransactions = getUserTransactions(transactions, account);
   const userClaims = transactions as UserClaimTransactions;
   const BALANCE_OF = "balanceOf";
+  const POOL_TOKEN_BALANCE = "getPoolTokenBalance";
+  const POOL_PENDING_REWARDS = "getPoolPendingRewards";
   const LP_TOKEN_COLLECTION = "lpTokens";
+  const PENDING_REWARDS_COLLECTION = "pendingRewards";
   const MARKET_SHARE_COLLECTION = "marketShares";
   const APPROVAL_COLLECTION = "approvals";
   const ALLOWANCE = "allowance";
@@ -679,7 +684,59 @@ export const getUserBalances = async (
   userBalances.ETH = await getEthBalance(provider, cashes, account);
   const usdc = Object.values(cashes).find((c) => c.name === USDC);
 
-  const contractLpBalanceCall: ContractCallContext[] = exchanges.map((exchange) => ({
+  const supportRewards = rewardsSupported(ammFactoryAddresses);
+  const rewardsUnsupportedExchanges = exchanges.filter((f) => !supportRewards.includes(f.ammFactoryAddress));
+  const supportRewardsExchanges = exchanges.filter((f) => supportRewards.includes(f.ammFactoryAddress));
+  const ammFactoryAbi =
+    supportRewards.length > 0 ? extractABI(getAmmFactoryContract(provider, supportRewards[0], account)) : null;
+
+  const contractLpBalanceRewardsCall: ContractCallContext[] = ammFactoryAbi
+    ? supportRewardsExchanges.reduce(
+        (p, exchange) => [
+          ...p,
+          {
+            reference: `${exchange.id}-lp`,
+            contractAddress: exchange.ammFactoryAddress,
+            abi: ammFactoryAbi,
+            calls: [
+              {
+                reference: `${exchange.id}-lp`,
+                methodName: POOL_TOKEN_BALANCE,
+                methodParameters: [exchange.id, account],
+                context: {
+                  dataKey: exchange.marketId,
+                  collection: LP_TOKEN_COLLECTION,
+                  decimals: 18,
+                  marketId: exchange.marketId,
+                  totalSupply: exchange?.totalSupply,
+                },
+              },
+            ],
+          },
+          {
+            reference: `${exchange.id}-reward`,
+            contractAddress: exchange.ammFactoryAddress,
+            abi: ammFactoryAbi,
+            calls: [
+              {
+                reference: `${exchange.id}-reward`,
+                methodName: POOL_PENDING_REWARDS,
+                methodParameters: [exchange.id, account],
+                context: {
+                  dataKey: exchange.marketId,
+                  collection: PENDING_REWARDS_COLLECTION,
+                  decimals: 18,
+                  marketId: exchange.marketId,
+                },
+              },
+            ],
+          },
+        ],
+        []
+      )
+    : [];
+
+  const contractLpBalanceCall: ContractCallContext[] = rewardsUnsupportedExchanges.map((exchange) => ({
     reference: exchange.id,
     contractAddress: exchange.id,
     abi: ERC20ABI,
@@ -768,7 +825,9 @@ export const getUserBalances = async (
     ...contractMarketShareBalanceCall,
     ...contractLpBalanceCall,
     ...contractAmmFactoryApprovals,
+    ...contractLpBalanceRewardsCall,
   ];
+
   const balanceResult: ContractCallResults = await chunkedMulticall(provider, balanceCalls);
 
   for (let i = 0; i < Object.keys(balanceResult.results).length; i++) {
@@ -780,35 +839,41 @@ export const getUserBalances = async (
     const { dataKey, collection, decimals, marketId, outcomeId, totalSupply } = context;
     const balance = convertOnChainCashAmountToDisplayCashAmount(new BN(rawBalance), new BN(decimals));
 
-    if (method === BALANCE_OF) {
+    if (method === POOL_TOKEN_BALANCE) {
+      if (rawBalance !== "0") {
+        const lpBalance = lpTokensOnChainToDisplay(rawBalance);
+        const total = lpTokensOnChainToDisplay(totalSupply);
+        const poolPct = lpTokenPercentageAmount(lpBalance, total);
+        userBalances[collection][dataKey] = {
+          balance: lpBalance.toFixed(),
+          rawBalance,
+          marketId,
+          poolPct,
+        };
+      } else {
+        delete userBalances[collection][dataKey];
+      }
+    } else if (method === POOL_PENDING_REWARDS) {
+      if (rawBalance !== "0") {
+        userBalances[collection][dataKey] = {
+          balance: balance.toFixed(),
+          rawBalance,
+          marketId,
+        };
+      } else {
+        delete userBalances[collection][dataKey];
+      }
+    } else if (method === BALANCE_OF) {
       if (!collection) {
         userBalances[dataKey] = {
           balance: balance.toFixed(),
           rawBalance: rawBalance,
           usdValue: balance.toFixed(),
         };
-      } else if (collection === LP_TOKEN_COLLECTION) {
-        if (rawBalance !== "0") {
-          const lpBalance = lpTokensOnChainToDisplay(rawBalance);
-          const total = lpTokensOnChainToDisplay(totalSupply);
-          const poolPct = lpTokenPercentageAmount(lpBalance, total);
-          userBalances[collection][dataKey] = {
-            balance: lpBalance.toFixed(),
-            rawBalance,
-            marketId,
-            poolPct,
-          };
-        } else {
-          delete userBalances[collection][dataKey];
-        }
       } else if (collection === MARKET_SHARE_COLLECTION) {
         const fixedShareBalance = sharesOnChainToDisplay(new BN(rawBalance)).toFixed();
-        // todo: re organize balances to be really simple (future)
-        // can index using dataKey (shareToken)
-        //userBalances[collection][dataKey] = { balance: fixedBalance, rawBalance, marketId };
-
         // shape AmmMarketShares
-        const existingMarketShares = userBalances.marketShares[marketId];
+        const existingMarketShares = userBalances[collection][marketId];
         const marketTransactions = userMarketTransactions[marketId];
         const exchange = ammExchanges[marketId];
         if (existingMarketShares) {
@@ -821,11 +886,11 @@ export const getUserBalances = async (
             account,
             userClaims
           );
-          if (position) userBalances.marketShares[marketId].positions.push(position);
-          userBalances.marketShares[marketId].outcomeSharesRaw[outcomeId] = rawBalance;
-          userBalances.marketShares[marketId].outcomeShares[outcomeId] = fixedShareBalance;
+          if (position) userBalances[collection][marketId].positions.push(position);
+          userBalances[collection][marketId].outcomeSharesRaw[outcomeId] = rawBalance;
+          userBalances[collection][marketId].outcomeShares[outcomeId] = fixedShareBalance;
         } else if (fixedShareBalance !== "0") {
-          userBalances.marketShares[marketId] = {
+          userBalances[collection][marketId] = {
             ammExchange: exchange,
             positions: [],
             outcomeSharesRaw: [],
@@ -841,9 +906,9 @@ export const getUserBalances = async (
             account,
             userClaims
           );
-          if (position) userBalances.marketShares[marketId].positions.push(position);
-          userBalances.marketShares[marketId].outcomeSharesRaw[outcomeId] = rawBalance;
-          userBalances.marketShares[marketId].outcomeShares[outcomeId] = fixedShareBalance;
+          if (position) userBalances[collection][marketId].positions.push(position);
+          userBalances[collection][marketId].outcomeSharesRaw[outcomeId] = rawBalance;
+          userBalances[collection][marketId].outcomeShares[outcomeId] = fixedShareBalance;
         }
       }
     } else if (method === ALLOWANCE) {
@@ -856,6 +921,9 @@ export const getUserBalances = async (
     populateClaimableWinnings(keyedFinalizedMarkets, finalizedAmmExchanges, userBalances.marketShares);
   }
 
+  const totalRewards = Object.values(userBalances.pendingRewards)
+    .reduce((p, r) => p.plus(new BN(r.balance)), ZERO)
+    .toFixed();
   const userPositions = getTotalPositions(userBalances.marketShares);
   let openMarketShares = {};
   Object.keys(userBalances.marketShares).forEach((marketId) => {
@@ -882,6 +950,7 @@ export const getUserBalances = async (
     totalAccountValueOpenOnly,
     totalAccountValue,
     availableFundsUsd,
+    totalRewards,
   };
 };
 
@@ -1394,6 +1463,14 @@ export const getERC1155ApprovedForAll = async (
   const contract = getErc1155Contract(tokenAddress, provider, account);
   const isApproved = await contract.isApprovedForAll(account, spender);
   return Boolean(isApproved);
+};
+
+const rewardsSupported = (ammFactories: string[]) => {
+  // filter out amm factories that don't support rewards, use new flag to determine if amm factory gives rewards
+  const rewardable = marketFactories()
+    .filter((m) => m.hasRewards)
+    .map((m) => m.ammFactory);
+  return ammFactories.filter((m) => rewardable.includes(m));
 };
 
 // adding constants here with special logic

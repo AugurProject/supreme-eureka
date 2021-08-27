@@ -1,23 +1,23 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { MasterChef__factory } from "../typechain";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployments, getNamedAccounts } = hre;
   const { deployer } = await getNamedAccounts();
 
-  const collateral = (await deployments.get("Collateral")).address;
-  const reputationToken = (await deployments.get("Reputation")).address;
+  const { address: wrappedMaticAddress } = await deployments.get("WrappedMatic");
 
-  if (hre.network.config.live) console.log(collateral, reputationToken);
+  const args: Parameters<MasterChef__factory["deploy"]> = [wrappedMaticAddress];
 
-  await deployments.deploy("FeePot", {
+  await deployments.deploy("MasterChef", {
     from: deployer,
-    args: [collateral, reputationToken],
+    args,
     log: true,
   });
 };
 
-func.tags = ["FeePot"];
-func.dependencies = ["Tokens"];
+func.tags = ["MasterChef"];
+func.dependencies = ["RewardsTokens"];
 
 export default func;

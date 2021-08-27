@@ -18,8 +18,14 @@ export interface MarketFactory {
   fetcher: string;
   description?: string; // for humans to read
   version?: string; // release version. for humans to read
+  hasRewards: boolean;
 }
-export type MarketFactoryType = "SportsLink" | "MMALink" | "Trusted" | "Crypto" | "NFL";
+export type MarketFactoryType =
+  | "SportsLink"
+  | "MMALink"
+  | "Trusted"
+  | "Crypto"
+  | "NFL";
 export type MarketFactorySubType = "V1" | "V2";
 export type MarketFactoryContractName =
   | "SportsLinkMarketFactoryV2"
@@ -83,6 +89,7 @@ export const addresses: AddressMapping = {
         fetcher: "0x1F26275cf999B33Eb39f304E622adbe0C5214Cbf",
         description: "mlb and nba",
         version: "v1.1.0",
+        hasRewards: false,
       },
       {
         type: "MMALink",
@@ -93,6 +100,7 @@ export const addresses: AddressMapping = {
         fetcher: "0xAE9df5bf273bfF861174194ca190e99e95a15a26",
         description: "mma",
         version: "v1.1.0",
+        hasRewards: false,
       },
       {
         type: "SportsLink",
@@ -103,6 +111,7 @@ export const addresses: AddressMapping = {
         fetcher: "",
         description: "mlb and nba",
         version: "v1.0.0",
+        hasRewards: false,
       },
       {
         type: "Crypto",
@@ -113,9 +122,61 @@ export const addresses: AddressMapping = {
         fetcher: "",
         description: "crypto prices",
         version: "v1.1.0",
+        hasRewards: false,
       },
     ],
     info: { uploadBlockNumber: 15336699, graphName: "matic" },
+  },
+  31337: {
+    reputationToken: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    balancerFactory: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    marketFactories: [
+      {
+        type: "NFL",
+        subtype: "V2",
+        address: "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+        collateral: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        ammFactory: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        fetcher: "0x59b670e9fA9D0A427751Af201D676719a970857b",
+        hasRewards: true,
+        description: "nfl",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "MMALink",
+        subtype: "V2",
+        address: "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+        collateral: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        ammFactory: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        fetcher: "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
+        hasRewards: true,
+        description: "mma",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "Crypto",
+        subtype: "V2",
+        address: "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
+        collateral: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        ammFactory: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        fetcher: "",
+        hasRewards: true,
+        description: "crypto prices",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "SportsLink",
+        subtype: "V2",
+        address: "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d",
+        collateral: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        ammFactory: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        fetcher: "0x59b670e9fA9D0A427751Af201D676719a970857b",
+        hasRewards: true,
+        description: "mlb and nba",
+        version: "FILL THIS OUT",
+      },
+    ],
+    info: { uploadBlockNumber: 1, graphName: "" },
   },
   80001: {
     reputationToken: "0x1A921b8a13372Cc81A415d02627756b5418a71c9",
@@ -124,10 +185,55 @@ export const addresses: AddressMapping = {
       {
         type: "NFL",
         subtype: "V2",
+        address: "0x7fD94cf10de25710BaD2740c413c60Fd817c468d",
+        collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
+        ammFactory: "0x04A2d8d96733fa8c0a60289Ddb6Ecfd40AD7681F",
+        fetcher: "0x9cB1559434ab7cA21120206Cd16Db80484C48C92",
+        hasRewards: true,
+        description: "nfl",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "MMALink",
+        subtype: "V2",
+        address: "0x91B2cdbed04d99Df41D0891c6DFE42D9D4783696",
+        collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
+        ammFactory: "0x04A2d8d96733fa8c0a60289Ddb6Ecfd40AD7681F",
+        fetcher: "0xde9122FC7143e0Fc01A4A6c166aE886c947a4Bcf",
+        hasRewards: true,
+        description: "mma",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "Crypto",
+        subtype: "V2",
+        address: "0x0b09056364909F7d2e1867c4eb5928C6DEeAABAA",
+        collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
+        ammFactory: "0x04A2d8d96733fa8c0a60289Ddb6Ecfd40AD7681F",
+        fetcher: "",
+        hasRewards: true,
+        description: "crypto prices",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "SportsLink",
+        subtype: "V2",
+        address: "0x242DCEA0de58F7E2588b6EFCBba3958668bFeC2b",
+        collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
+        ammFactory: "0x04A2d8d96733fa8c0a60289Ddb6Ecfd40AD7681F",
+        fetcher: "0x9cB1559434ab7cA21120206Cd16Db80484C48C92",
+        hasRewards: true,
+        description: "mlb and nba",
+        version: "FILL THIS OUT",
+      },
+      {
+        type: "NFL",
+        subtype: "V2",
         address: "0x8524e46E1B0823Ba23454e211e05A4C488020ABC",
         collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
         ammFactory: "0x7e7FCb06cC1DcBD1E6AFfFC862Ed169A336fB7Ce",
         fetcher: "0xC5C415cb7eC3ca7dcC26ca7a3fC1126A07122Ec7",
+        hasRewards: false,
         description: "nfl",
         version: "FILL THIS OUT",
       },
@@ -138,6 +244,7 @@ export const addresses: AddressMapping = {
         collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
         ammFactory: "0x7e7FCb06cC1DcBD1E6AFfFC862Ed169A336fB7Ce",
         fetcher: "0x2a507840577A7f896C1e190701390c1b08037c61",
+        hasRewards: false,
         description: "mma",
         version: "FILL THIS OUT",
       },
@@ -148,6 +255,7 @@ export const addresses: AddressMapping = {
         collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
         ammFactory: "0x7e7FCb06cC1DcBD1E6AFfFC862Ed169A336fB7Ce",
         fetcher: "",
+        hasRewards: false,
         description: "crypto prices",
         version: "FILL THIS OUT",
       },
@@ -158,6 +266,7 @@ export const addresses: AddressMapping = {
         collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
         ammFactory: "0x7e7FCb06cC1DcBD1E6AFfFC862Ed169A336fB7Ce",
         fetcher: "0xC5C415cb7eC3ca7dcC26ca7a3fC1126A07122Ec7",
+        hasRewards: false,
         description: "mlb and nba",
         version: "FILL THIS OUT",
       },
@@ -168,6 +277,7 @@ export const addresses: AddressMapping = {
         collateral: "0x5799bFe361BEea69f808328FF4884DF92f1f66f0",
         ammFactory: "0xf098b85047CfB29840a3a43194AbCb31d5C53E16",
         fetcher: "0x9f1DB2B2C81eAF3F96D8d942e2D515dE17975A2A",
+        hasRewards: false,
         description: "mma",
         version: "v1.1.0",
       },

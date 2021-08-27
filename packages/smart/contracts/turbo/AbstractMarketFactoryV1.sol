@@ -6,8 +6,9 @@ import "../libraries/IERC20Full.sol";
 import "../balancer/BPool.sol";
 import "./TurboShareTokenFactory.sol";
 import "./FeePot.sol";
+import "../libraries/AugurOwnable.sol";
 
-abstract contract AbstractMarketFactoryV1 is TurboShareTokenFactory, Ownable {
+abstract contract AbstractMarketFactoryV1 is TurboShareTokenFactory, AugurOwnable {
     using SafeMathUint256 for uint256;
 
     // Should always have ID. Others are optional.

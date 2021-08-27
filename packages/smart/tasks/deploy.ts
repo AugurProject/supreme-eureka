@@ -16,8 +16,6 @@ import {
 } from "hardhat/types";
 
 task("deploy", "Deploy Turbo").setAction(async (args, hre, runSuper) => {
-  if (!isHttpNetworkConfig(hre.network.config)) throw Error(`Can only deploy to HTTP networks`);
-
   await runSuper(args);
 
   // Verify deploy
@@ -46,6 +44,7 @@ export interface ExternalAddresses {
   usdcToken?: string; // address of USDC collateral. also the test collateral
   balancerFactory?: string;
   priceFeeds?: PriceFeedConfig[];
+  wrappedMatic?: string;
 }
 
 export interface PriceFeedConfig {
