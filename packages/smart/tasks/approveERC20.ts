@@ -1,7 +1,7 @@
 import { task, types } from "hardhat/config";
 
 import "hardhat/types/config";
-import { isHttpNetworkConfig, makeSigner } from "./deploy";
+import { makeSigner } from "./deploy";
 import { BigNumber } from "ethers";
 import { IERC20Full__factory } from "../typechain";
 import { bignumber, calcWei, getERC20Name } from "../src/utils/tasks";
@@ -36,7 +36,7 @@ task("approveERC20", "approve someone to spend your ERC20 tokens")
       if (!all && small.eq(0) && large.eq(0)) throw Error("Must specify --large, --small, or --all");
 
       const signer = await makeSigner(hre);
-      const confirmations = isHttpNetworkConfig(hre.network.config) ? hre.network.config.confirmations : 0;
+      const confirmations = hre.network.config.confirmations || 0;
       const contract = IERC20Full__factory.connect(erc20, signer);
 
       const name = (await getERC20Name(contract)) || "unknown";

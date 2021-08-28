@@ -15,7 +15,10 @@ const ETHERSCAN_API_KEY = process.env["ETHERSCAN_API_KEY"] || "CH7M2ATCZABP2GIHE
 export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const NO_OWNER = "0x0000000000000000000000000000000000000001";
 
-const config: HardhatUserConfig = {
+export const config: HardhatUserConfig = {
+  paths: {
+    artifacts: "./dist/artifacts",
+  },
   solidity: {
     compilers: [
       {

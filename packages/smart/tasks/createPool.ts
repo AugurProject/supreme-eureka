@@ -1,7 +1,7 @@
 import { task, types } from "hardhat/config";
 
 import "hardhat/types/config";
-import { isHttpNetworkConfig, makeSigner } from "./deploy";
+import { makeSigner } from "./deploy";
 import { BigNumber, ethers, Signer } from "ethers";
 import {
   AbstractMarketFactoryV2__factory,
@@ -29,7 +29,7 @@ task("createPool", "Create a balancer pool for an AMM")
       hre
     ) => {
       const signer = await makeSigner(hre);
-      const confirmations = isHttpNetworkConfig(hre.network.config) ? hre.network.config.confirmations : 0;
+      const confirmations = hre.network.config.confirmations || 0;
 
       initialLiquidity = ethers.BigNumber.from(10).pow(18).mul(initialLiquidity);
       const marketFactory = AbstractMarketFactoryV2__factory.connect(marketFactoryAddress, signer);

@@ -2375,6 +2375,11 @@
     "@truffle/contract" "^4.2.29"
     ethers "^4.0.45"
 
+"@chainlink/contracts@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@chainlink/contracts/-/contracts-0.2.1.tgz#0815901baa4634b7b41b4e747f3425e2c968fb85"
+  integrity sha512-mAQgPQKiqW3tLMlp31NgcnXpwG3lttgKU0izAqKiirJ9LH7rQ+O0oHIVR5Qp2yuqgmfbLsgfdLo4GcVC8IFz3Q==
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
@@ -4784,10 +4789,10 @@
   resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.0.2.tgz#c472abcba0c5185aaa4ad4070146e95213c68511"
   integrity sha512-6quxWe8wwS4X5v3Au8q1jOvXYEPkS1Fh+cME5u6AwNdnI4uERvPlVjlgRWzpnb+Rrt1l/cEqiNRH9GlsBMSDQg==
 
-"@nomiclabs/hardhat-ethers@npm:hardhat-deploy-ethers":
-  version "0.3.0-beta.7"
-  resolved "https://registry.yarnpkg.com/hardhat-deploy-ethers/-/hardhat-deploy-ethers-0.3.0-beta.7.tgz#860d86b84ed3c4fdef64283ccf1e8d5623454d02"
-  integrity sha512-JKMNte6vudu9LSNqgmBtNxc1gfxp3NUcPKVAf/FANHfl9pa/mBGg6hpQO7tD8CLkAbe6f4K5BjyYIPWX3p7MKw==
+"@nomiclabs/hardhat-ethers@npm:hardhat-deploy-ethers@0.3.0-beta.10":
+  version "0.3.0-beta.10"
+  resolved "https://registry.yarnpkg.com/hardhat-deploy-ethers/-/hardhat-deploy-ethers-0.3.0-beta.10.tgz#bccfcf635d380bbab3638960f6739fe4d396fc5f"
+  integrity sha512-TeyriUshRZ7XVHOjMsDtTozIrdwLf3Bw+oZRYNhXdG/eut5HeDhjUFPfRlG7TI1lSLvkcB5dt7OxOtPYKDOxTg==
 
 "@nomiclabs/hardhat-waffle@^2.0.0":
   version "2.0.1"

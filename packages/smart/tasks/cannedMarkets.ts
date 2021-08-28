@@ -10,8 +10,8 @@ import {
   NBAMarketFactory,
 } from "..";
 import { ManagedByLink, MMAMarketFactory } from "../typechain";
-import { isHttpNetworkConfig, makeSigner } from "./deploy";
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, Signer } from "ethers";
+import { makeSigner } from "./deploy";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { RoundManagement } from "../src";
 
@@ -19,7 +19,7 @@ task("cannedMarkets", "creates canned markets").setAction(async (args, hre: Hard
   console.log("Creating canned markets");
   const { ethers } = hre;
   const signer = await makeSigner(hre);
-  const confirmations = isHttpNetworkConfig(hre.network.config) ? hre.network.config.confirmations : 0;
+  const confirmations = hre.network.config.confirmations || 0;
   const network = await ethers.provider.getNetwork();
   const contracts: ContractInterfaces = buildContractInterfaces(signer, network.chainId);
 

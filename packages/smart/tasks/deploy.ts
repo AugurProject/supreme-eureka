@@ -16,8 +16,6 @@ import {
 } from "hardhat/types";
 
 task("deploy", "Deploy Turbo").setAction(async (args, hre, runSuper) => {
-  if (!isHttpNetworkConfig(hre.network.config)) throw Error(`Can only deploy to HTTP networks`);
-
   await runSuper(args);
 
   // Verify deploy
@@ -55,13 +53,19 @@ export interface PriceFeedConfig {
 }
 
 declare module "hardhat/types/config" {
+  export interface HardhatNetworkUserConfig {
+    confirmations?: number;
+  }
+
+  export interface HardhatNetworkConfig {
+    confirmations: number; // block confirmations before treating a tx as complete. not used in deploy
+  }
+
   export interface HttpNetworkUserConfig {
-    deployConfig: DeployConfig;
     confirmations?: number;
   }
 
   export interface HttpNetworkConfig {
-    deployConfig: DeployConfig; // called `deploy-config` because `deploy` is used by hardhat-deploy
     confirmations: number; // block confirmations before treating a tx as complete. not used in deploy
   }
 }
@@ -80,7 +84,7 @@ extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) =>
 });
 
 export function isHttpNetworkConfig(networkConfig?: NetworkConfig): networkConfig is HttpNetworkConfig {
-  return (networkConfig as HttpNetworkConfig)?.deployConfig !== undefined;
+  return (networkConfig as HttpNetworkConfig)?.url !== undefined;
 }
 
 export function isHttpNetworkUserConfig(networkConfig?: NetworkUserConfig): networkConfig is HttpNetworkUserConfig {
